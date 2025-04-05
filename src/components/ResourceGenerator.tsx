@@ -52,11 +52,16 @@ const resourceTypes = [
     value: "emotional-regulation",
     label: "Emotional Regulation",
   },
+  {
+    value: "custom",
+    label: "Custom Resource",
+  },
 ];
 
 const ResourceGenerator = () => {
   const [selectedResourceType, setSelectedResourceType] = useState("");
   const [userConcern, setUserConcern] = useState("");
+  const [customPrompt, setCustomPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedResource, setGeneratedResource] = useState("");
   const { toast } = useToast();
@@ -70,19 +75,35 @@ const ResourceGenerator = () => {
       return;
     }
 
+    if (selectedResourceType === "custom" && !customPrompt) {
+      toast({
+        description: "Please enter a custom prompt.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsGenerating(true);
 
     try {
-      const selectedType = resourceTypes.find(
-        (type) => type.value === selectedResourceType
-      )?.label;
+      let resource;
+      
+      if (selectedResourceType === "custom") {
+        // Generate resource based on custom prompt
+        resource = await generateResource(customPrompt);
+      } else {
+        // Generate resource based on selected type
+        const selectedType = resourceTypes.find(
+          (type) => type.value === selectedResourceType
+        )?.label;
 
-      if (!selectedType) return;
+        if (!selectedType) return;
 
-      const resource = await generateResource(
-        selectedType,
-        userConcern || undefined
-      );
+        resource = await generateResource(
+          selectedType,
+          userConcern || undefined
+        );
+      }
 
       setGeneratedResource(resource);
     } catch (error) {
@@ -100,13 +121,17 @@ const ResourceGenerator = () => {
   const handleDownloadResource = () => {
     if (!generatedResource) return;
 
-    const selectedTypeLabel = resourceTypes.find(
-      (type) => type.value === selectedResourceType
-    )?.label;
-
-    const filename = `${
-      selectedTypeLabel?.toLowerCase().replace(/\s+/g, "-") || "resource"
-    }.md`;
+    let filename;
+    if (selectedResourceType === "custom") {
+      filename = "custom-resource.md";
+    } else {
+      const selectedTypeLabel = resourceTypes.find(
+        (type) => type.value === selectedResourceType
+      )?.label;
+      filename = `${
+        selectedTypeLabel?.toLowerCase().replace(/\s+/g, "-") || "resource"
+      }.md`;
+    }
 
     const element = document.createElement("a");
     const file = new Blob([generatedResource], { type: "text/markdown" });
@@ -124,6 +149,7 @@ const ResourceGenerator = () => {
   const resetForm = () => {
     setSelectedResourceType("");
     setUserConcern("");
+    setCustomPrompt("");
     setGeneratedResource("");
   };
 
@@ -162,20 +188,37 @@ const ResourceGenerator = () => {
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <label
-              htmlFor="concern"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
-              Your Concern (Optional)
-            </label>
-            <Input
-              id="concern"
-              placeholder="E.g., work stress, social anxiety"
-              value={userConcern}
-              onChange={(e) => setUserConcern(e.target.value)}
-            />
-          </div>
+          {selectedResourceType === "custom" ? (
+            <div className="space-y-2">
+              <label
+                htmlFor="custom-prompt"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Custom Prompt
+              </label>
+              <Input
+                id="custom-prompt"
+                placeholder="E.g., Create a guide for managing social anxiety at work"
+                value={customPrompt}
+                onChange={(e) => setCustomPrompt(e.target.value)}
+              />
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <label
+                htmlFor="concern"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Your Concern (Optional)
+              </label>
+              <Input
+                id="concern"
+                placeholder="E.g., work stress, social anxiety"
+                value={userConcern}
+                onChange={(e) => setUserConcern(e.target.value)}
+              />
+            </div>
+          )}
         </CardContent>
         <CardFooter className="flex flex-col gap-2">
           <Button
@@ -197,8 +240,8 @@ const ResourceGenerator = () => {
               className="w-full"
               variant="outline"
               onClick={resetForm}
-              startIcon={<RefreshCcw className="h-4 w-4 mr-2" />}
             >
+              <RefreshCcw className="h-4 w-4 mr-2" />
               Create Another
             </Button>
           )}
@@ -210,8 +253,10 @@ const ResourceGenerator = () => {
           <div>
             <CardTitle>
               {generatedResource
-                ? resourceTypes.find((type) => type.value === selectedResourceType)
-                    ?.label || "Generated Resource"
+                ? selectedResourceType === "custom"
+                  ? "Custom Resource"
+                  : resourceTypes.find((type) => type.value === selectedResourceType)
+                      ?.label || "Generated Resource"
                 : "Resource Preview"}
             </CardTitle>
             <CardDescription>

@@ -54,18 +54,29 @@ export const generateChatResponse = async (
 
 // Generate a resource using the AI
 export const generateResource = async (
-  resourceType: string,
+  resourceTypeOrCustomPrompt: string,
   userConcern?: string
 ): Promise<string> => {
-  const prompt = `Create a helpful resource about ${resourceType}${
-    userConcern ? ` for someone dealing with ${userConcern}` : ""
-  }. Include an introduction, key points, practical exercises, and a conclusion. Format with markdown.`;
+  // Check if this is a custom prompt or a resource type
+  const isCustomPrompt = !userConcern && resourceTypeOrCustomPrompt.length > 20;
+  
+  let prompt;
+  
+  if (isCustomPrompt) {
+    // Use the input directly as a custom prompt
+    prompt = resourceTypeOrCustomPrompt;
+  } else {
+    // Format as a resource type prompt
+    prompt = `Create a helpful resource about ${resourceTypeOrCustomPrompt}${
+      userConcern ? ` for someone dealing with ${userConcern}` : ""
+    }. Include an introduction, key points, practical exercises, and a conclusion. Format with markdown.`;
+  }
   
   try {
     const messages: Message[] = [
       {
         role: "system",
-        content: "You are a compassionate mental health professional creating helpful resources. Be supportive, practical, and evidence-based.",
+        content: "You are a compassionate mental health professional creating helpful resources. Be supportive, practical, and evidence-based. Format your response with markdown, including headings, bullet points, and emphasized text where appropriate.",
       },
       { role: "user", content: prompt },
     ];
