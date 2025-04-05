@@ -107,9 +107,12 @@ const ChatInterface = () => {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-13rem)] border rounded-md overflow-hidden">
-      <div className="flex items-center justify-between border-b px-4 py-2">
-        <h2 className="text-lg font-medium">AI Counselor Chat</h2>
+    <div className="flex flex-col h-[calc(100vh-13rem)] border rounded-md overflow-hidden bg-background shadow-md">
+      <div className="flex items-center justify-between border-b px-4 py-3 bg-muted/30">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <Bot className="h-5 w-5 text-primary" />
+          AI Counselor Chat
+        </h2>
         <Button variant="ghost" size="sm" onClick={clearChat}>
           Clear Chat
         </Button>
@@ -122,18 +125,18 @@ const ChatInterface = () => {
               <div
                 key={index}
                 className={cn(
-                  "flex gap-3 max-w-[80%]",
-                  message.role === "user" ? "ml-auto" : "mr-auto"
+                  "flex gap-3",
+                  message.role === "user" ? "justify-end" : "justify-start"
                 )}
               >
                 {message.role === "assistant" && (
-                  <Avatar className="h-8 w-8">
+                  <Avatar className="h-8 w-8 bg-muted">
                     <Bot className="h-5 w-5" />
                   </Avatar>
                 )}
                 <div
                   className={cn(
-                    "rounded-lg px-4 py-2 text-sm",
+                    "rounded-lg px-4 py-2 text-sm max-w-[80%]",
                     message.role === "user"
                       ? "bg-primary text-primary-foreground"
                       : "bg-muted"
@@ -142,8 +145,8 @@ const ChatInterface = () => {
                   {message.content}
                 </div>
                 {message.role === "user" && (
-                  <Avatar className="h-8 w-8">
-                    <User className="h-5 w-5" />
+                  <Avatar className="h-8 w-8 bg-primary">
+                    <User className="h-5 w-5 text-primary-foreground" />
                   </Avatar>
                 )}
               </div>
@@ -152,7 +155,7 @@ const ChatInterface = () => {
           
           {isLoading && (
             <div className="flex gap-3">
-              <Avatar className="h-8 w-8">
+              <Avatar className="h-8 w-8 bg-muted">
                 <Bot className="h-5 w-5" />
               </Avatar>
               <div className="rounded-lg px-4 py-2 text-sm bg-muted flex items-center">
@@ -164,14 +167,14 @@ const ChatInterface = () => {
         </div>
       </ScrollArea>
       
-      <div className="border-t p-4">
+      <div className="border-t p-4 bg-muted/20">
         <div className="flex gap-2">
           <Textarea
             placeholder="Type your message here..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="resize-none min-h-[60px]"
+            className="resize-none min-h-[60px] focus-visible:ring-1 focus-visible:ring-primary"
             disabled={isLoading}
           />
           <Button 
