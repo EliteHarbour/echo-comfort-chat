@@ -20,6 +20,11 @@ export type ChatResponse = {
   }[];
 };
 
+export type QuizQuestion = {
+  id: string;
+  text: string;
+};
+
 export const generateChatResponse = async (
   messages: Message[]
 ): Promise<string> => {
@@ -85,6 +90,56 @@ export const generateResource = async (
   } catch (error) {
     console.error("Failed to generate resource:", error);
     return "I'm sorry, but I couldn't generate this resource right now. Please try again later.";
+  }
+};
+
+// Generate quiz questions using AI
+export const generateQuizQuestions = async (
+  topic: string = "mental health",
+  questionCount: number = 7
+): Promise<QuizQuestion[]> => {
+  try {
+    const prompt = `Create ${questionCount} mental health self-assessment questions about ${topic}. 
+    Format each question with an id and text property, with questions focused on symptoms and experiences 
+    over the past 2 weeks. Return as valid JSON array that I can parse directly.`;
+
+    const messages: Message[] = [
+      {
+        role: "system",
+        content: "You are an expert psychologist creating mental health assessment questions. Create questions similar to established mental health screening tools. Output ONLY valid JSON without any explanation or markdown.",
+      },
+      { role: "user", content: prompt },
+    ];
+    
+    const response = await generateChatResponse(messages);
+    
+    // Try to parse the response as JSON
+    try {
+      // In case the response has markdown code blocks, try to extract just the JSON
+      const jsonMatch = response.match(/```(?:json)?([\s\S]*?)```/) || 
+                       [null, response];
+      const jsonContent = jsonMatch[1].trim();
+      
+      const parsedQuestions = JSON.parse(jsonContent);
+      return parsedQuestions.map((q: any, index: number) => ({
+        id: q.id || `q${index + 1}`,
+        text: q.text
+      }));
+    } catch (parseError) {
+      console.error("Failed to parse question response:", parseError);
+      // If parsing fails, return default questions
+      return Array.from({ length: questionCount }, (_, i) => ({
+        id: `q${i + 1}`,
+        text: `Question ${i + 1} about your mental health in the past 2 weeks.`
+      }));
+    }
+  } catch (error) {
+    console.error("Failed to generate quiz questions:", error);
+    // Return default questions if API call fails
+    return Array.from({ length: questionCount }, (_, i) => ({
+      id: `q${i + 1}`,
+      text: `Question ${i + 1} about your mental health in the past 2 weeks.`
+    }));
   }
 };
 

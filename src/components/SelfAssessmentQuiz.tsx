@@ -13,10 +13,11 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Loader2, ArrowRight, CheckCircle, RefreshCcw } from "lucide-react";
-import { scoreAssessment } from "@/lib/api";
+import { scoreAssessment, QuizQuestion } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 
-const questions = [
+// Default questions as fallback
+const defaultQuestions: QuizQuestion[] = [
   {
     id: "q1",
     text: "Over the past 2 weeks, how often have you felt little interest or pleasure in doing things?",
@@ -60,7 +61,11 @@ type AssessmentResults = {
   recommendations: string[];
 };
 
-const SelfAssessmentQuiz = () => {
+interface SelfAssessmentQuizProps {
+  questions?: QuizQuestion[];
+}
+
+const SelfAssessmentQuiz = ({ questions = defaultQuestions }: SelfAssessmentQuizProps) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [currentAnswer, setCurrentAnswer] = useState<string | null>(null);
@@ -166,8 +171,8 @@ const SelfAssessmentQuiz = () => {
             className="w-full"
             variant="outline"
             onClick={restartQuiz}
-            startIcon={<RefreshCcw className="h-4 w-4 mr-2" />}
           >
+            <RefreshCcw className="h-4 w-4 mr-2" />
             Take Assessment Again
           </Button>
         </CardFooter>
