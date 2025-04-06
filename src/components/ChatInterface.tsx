@@ -24,7 +24,6 @@ const ChatInterface = () => {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
   // Store chat history in localStorage
@@ -49,15 +48,17 @@ const ChatInterface = () => {
     }
   }, [messages]);
 
-  // Scroll to bottom when messages change
+  // Improved scroll to bottom function that works more reliably
   const scrollToBottom = () => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-    } else if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
-    }
+    // Using setTimeout to ensure DOM has updated before scrolling
+    setTimeout(() => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+      }
+    }, 100);
   };
 
+  // Scroll to bottom when messages change
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
@@ -86,6 +87,8 @@ const ChatInterface = () => {
       };
       
       setMessages((prev) => [...prev, assistantMessage]);
+      // Force scroll to bottom again after response is received
+      scrollToBottom();
     } catch (error) {
       toast({
         title: "Error",
@@ -125,7 +128,7 @@ const ChatInterface = () => {
         </Button>
       </div>
       
-      <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
+      <ScrollArea className="flex-1 p-4">
         <div className="space-y-4">
           {messages.map((message, index) => (
             message.role !== "system" && (
