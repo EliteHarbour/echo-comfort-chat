@@ -51,15 +51,19 @@ const ChatInterface = () => {
 
   // Improved scroll to bottom function that works more reliably
   const scrollToBottom = () => {
-    // Using setTimeout to ensure DOM has updated before scrolling
-    setTimeout(() => {
-      if (messagesEndRef.current && scrollAreaRef.current) {
-        messagesEndRef.current.scrollIntoView({
-          behavior: "smooth",
-          block: "end",
-        });
+    if (scrollAreaRef.current) {
+      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      const messagesContainer = scrollContainer?.lastElementChild;
+      
+      if (messagesContainer && messagesEndRef.current) {
+        setTimeout(() => {
+          messagesEndRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "end",
+          });
+        }, 100);
       }
-    }, 100);
+    }
   };
 
   // Scroll to bottom when messages change
