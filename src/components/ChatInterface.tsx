@@ -23,6 +23,7 @@ const ChatInterface = () => {
   const [messages, setMessages] = useState<Message[]>([WELCOME_MESSAGE]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -49,10 +50,16 @@ const ChatInterface = () => {
   }, [messages]);
 
   // Scroll to bottom when messages change
-  useEffect(() => {
-    if (scrollAreaRef.current) {
+  const scrollToBottom = () => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    } else if (scrollAreaRef.current) {
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
     }
+  };
+
+  useEffect(() => {
+    scrollToBottom();
   }, [messages]);
 
   const handleSendMessage = async () => {
@@ -164,6 +171,7 @@ const ChatInterface = () => {
               </div>
             </div>
           )}
+          <div ref={messagesEndRef} />
         </div>
       </ScrollArea>
       
