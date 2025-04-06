@@ -24,7 +24,7 @@ const ChatInterface = () => {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const scrollAreaViewportRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
   // Store chat history in localStorage
@@ -53,8 +53,7 @@ const ChatInterface = () => {
   const scrollToBottom = () => {
     // Using setTimeout to ensure DOM has updated before scrolling
     setTimeout(() => {
-      if (messagesEndRef.current && scrollAreaViewportRef.current) {
-        // Scroll the message into view within the ScrollArea viewport
+      if (messagesEndRef.current && scrollAreaRef.current) {
         messagesEndRef.current.scrollIntoView({
           behavior: "smooth",
           block: "end",
@@ -135,7 +134,7 @@ const ChatInterface = () => {
       
       <ScrollArea 
         className="flex-1 p-4" 
-        viewportRef={scrollAreaViewportRef}
+        ref={scrollAreaRef}
       >
         <div className="space-y-4">
           {messages.map((message, index) => (
