@@ -1,8 +1,6 @@
 
-// OpenRouter AI API interface
-const OPENROUTER_API_KEY = "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";
+const OPENROUTER_API_KEY = "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";
 const API_URL = "https://openrouter.ai/api/v1/chat/completions";
-
 export type Message = {
   role: "system" | "user" | "assistant";
   content: string;
@@ -33,7 +31,7 @@ export const generateChatResponse = async (
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+        Authorization: `Bearer ${OPENROUTER_API_KEY}`
       },
       body: JSON.stringify({
         model: "openai/gpt-3.5-turbo", // Using a model available in the free tier
