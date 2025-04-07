@@ -2,17 +2,18 @@
 import Layout from "@/components/Layout";
 import SelfAssessmentQuiz from "@/components/SelfAssessmentQuiz";
 import { useState, useEffect } from "react";
-import { generateQuizQuestions, QuizQuestion, QUIZ_TYPES, QuizType } from "@/lib/api";
+import { QuizQuestion, QUIZ_TYPES, QuizType } from "@/lib/api";
 import { Loader2, ClipboardList, Info, AlertTriangle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
+import { getQuizQuestions } from "@/lib/quizData"; // We'll create this file to store all quiz questions
 
 const Assessment = () => {
   const [isLoading, setIsLoading] = useState(true);
-  const [aiQuestions, setAiQuestions] = useState<QuizQuestion[]>([]);
-  const [selectedQuizType, setSelectedQuizType] = useState<string>("mood");
+  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
+  const [selectedQuizType, setSelectedQuizType] = useState<string>("anxiety");
   const [quizCategories, setQuizCategories] = useState<Record<string, QuizType[]>>({});
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -35,27 +36,15 @@ const Assessment = () => {
       setIsLoading(true);
       setError(null);
       try {
-        // Determine appropriate question count based on quiz type
-        let questionCount = 7; // Default
-        
-        // Standard quiz types with predefined structures
-        if (selectedQuizType === 'anxiety') questionCount = 7;
-        if (selectedQuizType === 'depression') questionCount = 9;
-        if (selectedQuizType === 'stress') questionCount = 10;
-        if (selectedQuizType === 'sleep') questionCount = 8;
-        if (selectedQuizType === 'values') questionCount = 15;
-        if (selectedQuizType === 'emotional-intelligence') questionCount = 20; // Sample subset
-        if (selectedQuizType === 'coping') questionCount = 12;
-        if (selectedQuizType === 'workplace') questionCount = 15;
-
-        const questions = await generateQuizQuestions(selectedQuizType, questionCount);
-        setAiQuestions(questions);
+        // Get predefined questions from our new module
+        const loadedQuestions = getQuizQuestions(selectedQuizType);
+        setQuestions(loadedQuestions);
       } catch (error) {
-        console.error("Error generating questions:", error);
+        console.error("Error loading questions:", error);
         setError("There was a problem loading the assessment questions. Please try again.");
         toast({
           title: "Error loading questions",
-          description: "We couldn't generate the assessment questions. Please try again later.",
+          description: "We couldn't load the assessment questions. Please try again later.",
           variant: "destructive",
         });
       } finally {
@@ -94,7 +83,7 @@ const Assessment = () => {
             <div>
               <h2 className="text-lg font-semibold mb-2 text-primary">About This Assessment</h2>
               <p className="text-muted-foreground">
-                These AI-powered assessments help you reflect on different aspects of your mental health.
+                These assessments help you reflect on different aspects of your mental health.
                 Your responses are analyzed to provide tailored recommendations and insights.
               </p>
               <div className="mt-3 text-sm text-muted-foreground">
@@ -165,12 +154,12 @@ const Assessment = () => {
         {isLoading ? (
           <div className="flex flex-col items-center justify-center p-16 bg-background border rounded-lg shadow-sm">
             <Loader2 className="h-10 w-10 animate-spin mb-4 text-primary" />
-            <p className="text-lg font-medium">Generating personalized assessment questions...</p>
+            <p className="text-lg font-medium">Loading assessment questions...</p>
             <p className="text-muted-foreground mt-2">This will only take a moment.</p>
           </div>
         ) : (
           <div className="bg-background border rounded-lg shadow-sm">
-            <SelfAssessmentQuiz questions={aiQuestions} quizType={selectedQuizType} />
+            <SelfAssessmentQuiz questions={questions} quizType={selectedQuizType} />
           </div>
         )}
       </div>
