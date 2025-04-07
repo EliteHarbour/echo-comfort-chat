@@ -3,15 +3,19 @@ import Layout from "@/components/Layout";
 import SelfAssessmentQuiz from "@/components/SelfAssessmentQuiz";
 import { useState, useEffect } from "react";
 import { generateQuizQuestions, QuizQuestion, QUIZ_TYPES, QuizType } from "@/lib/api";
-import { Loader2, ClipboardList, Info } from "lucide-react";
+import { Loader2, ClipboardList, Info, AlertTriangle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { useToast } from "@/hooks/use-toast";
 
 const Assessment = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [aiQuestions, setAiQuestions] = useState<QuizQuestion[]>([]);
   const [selectedQuizType, setSelectedQuizType] = useState<string>("mood");
   const [quizCategories, setQuizCategories] = useState<Record<string, QuizType[]>>({});
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   // Group quiz types by category
   useEffect(() => {
@@ -29,18 +33,38 @@ const Assessment = () => {
   useEffect(() => {
     const loadQuestions = async () => {
       setIsLoading(true);
+      setError(null);
       try {
-        const questions = await generateQuizQuestions(selectedQuizType);
+        // Determine appropriate question count based on quiz type
+        let questionCount = 7; // Default
+        
+        // Standard quiz types with predefined structures
+        if (selectedQuizType === 'anxiety') questionCount = 7;
+        if (selectedQuizType === 'depression') questionCount = 9;
+        if (selectedQuizType === 'stress') questionCount = 10;
+        if (selectedQuizType === 'sleep') questionCount = 8;
+        if (selectedQuizType === 'values') questionCount = 15;
+        if (selectedQuizType === 'emotional-intelligence') questionCount = 20; // Sample subset
+        if (selectedQuizType === 'coping') questionCount = 12;
+        if (selectedQuizType === 'workplace') questionCount = 15;
+
+        const questions = await generateQuizQuestions(selectedQuizType, questionCount);
         setAiQuestions(questions);
       } catch (error) {
         console.error("Error generating questions:", error);
+        setError("There was a problem loading the assessment questions. Please try again.");
+        toast({
+          title: "Error loading questions",
+          description: "We couldn't generate the assessment questions. Please try again later.",
+          variant: "destructive",
+        });
       } finally {
         setIsLoading(false);
       }
     };
 
     loadQuestions();
-  }, [selectedQuizType]);
+  }, [selectedQuizType, toast]);
 
   const handleQuizTypeSelect = (quizType: string) => {
     setSelectedQuizType(quizType);
@@ -117,7 +141,26 @@ const Assessment = () => {
         <div className="mb-6">
           <h2 className="text-2xl font-semibold mb-2">{currentQuiz.name}</h2>
           <p className="text-muted-foreground">{currentQuiz.description}</p>
+          
+          {(selectedQuizType === 'emotional-intelligence' || selectedQuizType === 'values') && (
+            <Alert className="mt-4">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>This is a condensed version</AlertTitle>
+              <AlertDescription>
+                This assessment presents a subset of questions from the full assessment to provide a meaningful
+                but manageable experience. For a complete evaluation, consider consulting with a mental health professional.
+              </AlertDescription>
+            </Alert>
+          )}
         </div>
+
+        {error && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
         {isLoading ? (
           <div className="flex flex-col items-center justify-center p-16 bg-background border rounded-lg shadow-sm">

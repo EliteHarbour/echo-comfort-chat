@@ -1,6 +1,6 @@
-
 const OPENROUTER_API_KEY = "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";
 const API_URL = "https://openrouter.ai/api/v1/chat/completions";
+
 export type Message = {
   role: "system" | "user" | "assistant";
   content: string;
@@ -40,14 +40,14 @@ export const QUIZ_TYPES: QuizType[] = [
   },
   {
     id: 'anxiety',
-    name: 'Anxiety Screening',
-    description: 'Based on GAD-7 to measure anxiety levels',
+    name: 'Anxiety Screening (GAD-7)',
+    description: 'Clinical tool to measure anxiety severity',
     category: 'screening'
   },
   {
     id: 'depression',
-    name: 'Depression Screening',
-    description: 'Similar to PHQ-9 to identify potential depression symptoms',
+    name: 'Depression Screening (PHQ-9)',
+    description: 'Standard clinical assessment for depression symptoms',
     category: 'screening'
   },
   {
@@ -115,6 +115,155 @@ export const QUIZ_TYPES: QuizType[] = [
     category: 'situation'
   }
 ];
+
+// Standard assessment questions for common clinical assessments
+const STANDARD_ASSESSMENTS: Record<string, QuizQuestion[]> = {
+  anxiety: [
+    { id: "a1", text: "Over the last 2 weeks, how often have you been bothered by feeling nervous, anxious, or on edge?" },
+    { id: "a2", text: "Over the last 2 weeks, how often have you been unable to stop or control worrying?" },
+    { id: "a3", text: "Over the last 2 weeks, how often have you been bothered by worrying too much about different things?" },
+    { id: "a4", text: "Over the last 2 weeks, how often have you had trouble relaxing?" },
+    { id: "a5", text: "Over the last 2 weeks, how often have you been so restless that it's hard to sit still?" },
+    { id: "a6", text: "Over the last 2 weeks, how often have you become easily annoyed or irritable?" },
+    { id: "a7", text: "Over the last 2 weeks, how often have you felt afraid as if something awful might happen?" }
+  ],
+  depression: [
+    { id: "d1", text: "Over the last 2 weeks, how often have you been bothered by little interest or pleasure in doing things?" },
+    { id: "d2", text: "Over the last 2 weeks, how often have you been bothered by feeling down, depressed, or hopeless?" },
+    { id: "d3", text: "Over the last 2 weeks, how often have you had trouble falling or staying asleep, or sleeping too much?" },
+    { id: "d4", text: "Over the last 2 weeks, how often have you felt tired or had little energy?" },
+    { id: "d5", text: "Over the last 2 weeks, how often have you had poor appetite or overeating?" },
+    { id: "d6", text: "Over the last 2 weeks, how often have you felt bad about yourself—or that you're a failure or have let yourself or your family down?" },
+    { id: "d7", text: "Over the last 2 weeks, how often have you had trouble concentrating on things, such as reading the newspaper or watching television?" },
+    { id: "d8", text: "Over the last 2 weeks, how often have you moved or spoken so slowly that other people could have noticed? Or the opposite—being so fidgety or restless that you've been moving around a lot more than usual?" },
+    { id: "d9", text: "Over the last two weeks, how often have you had thoughts that you would be better off dead or of hurting yourself in some way?" }
+  ],
+  stress: [
+    { id: "s1", text: "In the last month, how often have you felt that you were unable to control the important things in your life?" },
+    { id: "s2", text: "In the last month, how often have you felt confident about your ability to handle your personal problems?" },
+    { id: "s3", text: "In the last month, how often have you felt that things were going your way?" },
+    { id: "s4", text: "In the last month, how often have you felt difficulties were piling up so high that you could not overcome them?" },
+    { id: "s5", text: "In the last month, how often have you found that you could not cope with all the things that you had to do?" },
+    { id: "s6", text: "In the last month, how often have you been able to control irritations in your life?" },
+    { id: "s7", text: "In the last month, how often have you felt that you were on top of things?" },
+    { id: "s8", text: "In the last month, how often have you been angered because of things that were outside of your control?" },
+    { id: "s9", text: "In the last month, how often have you felt nervous and stressed?" },
+    { id: "s10", text: "In the last month, how often have you found yourself thinking about things that you have to accomplish?" }
+  ],
+  sleep: [
+    { id: "sl1", text: "How long does it typically take you to fall asleep after going to bed?" },
+    { id: "sl2", text: "How many times do you typically wake up during the night?" },
+    { id: "sl3", text: "How would you rate your overall sleep quality in the past month?" },
+    { id: "sl4", text: "How often do you feel tired or fatigued during the day due to poor sleep?" },
+    { id: "sl5", text: "How many hours of actual sleep do you get on a typical night?" },
+    { id: "sl6", text: "How often do you use electronic devices (phone, tablet, TV) within 30 minutes of going to bed?" },
+    { id: "sl7", text: "How satisfied are you with your current sleep pattern?" },
+    { id: "sl8", text: "How often do you use sleep medication (prescribed or over-the-counter)?" }
+  ],
+};
+
+// Define scoring interpretations for standard assessments
+const ASSESSMENT_INTERPRETATION: Record<string, string> = {
+  anxiety: `
+Scoring: 
+0–4: Minimal anxiety - Consider self-care resources.
+5–9: Mild anxiety - Mindfulness exercises and brief counseling may help.
+10–14: Moderate anxiety - Structured therapy sessions could be beneficial.
+15–21: Severe anxiety - Professional support and crisis resources are recommended.
+  `,
+  depression: `
+Scoring:
+0–4 points: Minimal depression - Self-care strategies like mindfulness exercises are recommended.
+5–9 points: Mild depression - Consider lifestyle changes and light therapy resources.
+10–14 points: Moderate depression - Structured therapy options and coping mechanisms may help.
+15–19 points: Moderately severe depression - Professional counseling and support groups are advised.
+20–27 points: Severe depression - Immediate professional intervention and crisis resources are recommended.
+
+Note: If you scored anything above 0 on question 9 about self-harm, please reach out to a mental health professional right away.
+  `,
+  stress: `
+Scoring:
+0-13: Low stress - Preventive resources and general wellness techniques may help maintain your wellbeing.
+14-26: Moderate stress - Specific stress management techniques and mindfulness exercises are recommended.
+27-40: High stress - Consider comprehensive stress reduction strategies and professional support options.
+  `,
+  sleep: `
+Scoring:
+0-7: Minimal sleep issues - Preventive sleep hygiene techniques can help maintain good sleep.
+8-14: Mild sleep problems - Basic sleep improvement strategies may be beneficial.
+15-19: Moderate sleep disruption - A comprehensive sleep hygiene program is recommended.
+20-24: Severe sleep issues - Consider professional consultation alongside self-help resources.
+  `,
+};
+
+// Standard recommendations based on assessment type
+const STANDARD_RECOMMENDATIONS: Record<string, Record<string, string[]>> = {
+  anxiety: {
+    minimal: [
+      "Practice regular mindfulness meditation for 10 minutes daily",
+      "Maintain physical activity like walking or yoga",
+      "Keep a worry journal to track and manage anxious thoughts",
+      "Establish consistent sleep and relaxation routines"
+    ],
+    mild: [
+      "Try guided meditation apps designed specifically for anxiety",
+      "Practice deep breathing exercises during moments of worry",
+      "Consider workbooks on cognitive behavioral techniques for anxiety",
+      "Establish regular check-ins with a supportive friend or family member",
+      "Limit caffeine and alcohol which can exacerbate anxiety"
+    ],
+    moderate: [
+      "Consider working with a therapist who specializes in anxiety disorders",
+      "Look into structured anxiety management programs or support groups",
+      "Learn and practice progressive muscle relaxation techniques daily",
+      "Create a consistent anti-anxiety routine including exercise, nutrition, and sleep",
+      "Consider workbooks or apps based on cognitive behavioral therapy"
+    ],
+    severe: [
+      "Consult with a mental health professional about comprehensive treatment options",
+      "Explore both therapy and potential medication options with your healthcare provider",
+      "Connect with support groups specifically for anxiety disorders",
+      "Create a crisis plan with specific steps to take during intense anxiety",
+      "Practice grounding techniques for immediate anxiety relief"
+    ]
+  },
+  depression: {
+    minimal: [
+      "Engage in regular physical activity, even short walks can help improve mood",
+      "Maintain social connections and reach out to friends or family",
+      "Practice good sleep hygiene with consistent bedtime routines",
+      "Consider gratitude journaling to focus on positive aspects of life"
+    ],
+    mild: [
+      "Schedule enjoyable activities throughout your week",
+      "Try bright light therapy, especially in the morning hours",
+      "Establish a regular sleep schedule and morning routine",
+      "Explore mindfulness meditation focused on self-compassion",
+      "Consider lifestyle adjustments to diet, exercise, and stress management"
+    ],
+    moderate: [
+      "Consider speaking with a therapist who specializes in depression",
+      "Explore structured approaches like cognitive behavioral therapy",
+      "Join a support group to connect with others with similar experiences",
+      "Create an activity schedule to ensure regular engagement in fulfilling tasks",
+      "Discuss treatment options with healthcare providers"
+    ],
+    "moderately severe": [
+      "Work with a mental health professional on a comprehensive treatment plan",
+      "Consider both therapy and medication options with your healthcare provider",
+      "Connect with depression-specific support groups",
+      "Establish a daily routine including physical activity and social connection",
+      "Create a safety plan with trusted supporters for difficult times"
+    ],
+    severe: [
+      "Seek immediate professional help from a mental health provider",
+      "Discuss comprehensive treatment options including therapy and medication",
+      "Consider intensive support options like intensive outpatient programs if available",
+      "Create a crisis response plan with clear steps and resources",
+      "Ensure regular contact with mental health professionals and support network"
+    ]
+  }
+};
 
 export const generateChatResponse = async (
   messages: Message[]
@@ -184,11 +333,16 @@ export const generateResource = async (
   }
 };
 
-// Generate quiz questions using AI
+// Generate quiz questions using AI or return standardized questions if available
 export const generateQuizQuestions = async (
   quizType: string = "mood",
   questionCount: number = 7
 ): Promise<QuizQuestion[]> => {
+  // First check if we have standard questions for this assessment type
+  if (STANDARD_ASSESSMENTS[quizType]) {
+    return STANDARD_ASSESSMENTS[quizType];
+  }
+  
   try {
     // Define prompts based on quiz type
     let promptContent;
@@ -197,23 +351,11 @@ export const generateQuizQuestions = async (
       case 'mood':
         promptContent = `Create ${questionCount} mood assessment questions focusing on current emotional state. Questions should help identify the user's mood patterns over the past 2 weeks.`;
         break;
-      case 'anxiety':
-        promptContent = `Create ${questionCount} anxiety screening questions based on validated tools like GAD-7. Focus on worry, nervousness, and anxiety symptoms over the past 2 weeks.`;
-        break;
-      case 'depression':
-        promptContent = `Create ${questionCount} depression screening questions similar to PHQ-9. Focus on mood, interest in activities, sleep, energy, and feelings of worthlessness over the past 2 weeks.`;
-        break;
-      case 'stress':
-        promptContent = `Create ${questionCount} stress assessment questions that measure perceived stress levels and identify stressors in the user's life over the past 2 weeks.`;
-        break;
-      case 'sleep':
-        promptContent = `Create ${questionCount} sleep quality assessment questions that evaluate sleep patterns, difficulties falling asleep, staying asleep, and daytime functioning over the past 2 weeks.`;
-        break;
       case 'values':
         promptContent = `Create ${questionCount} values clarification questions that help users identify their core personal values and what matters most to them.`;
         break;
       case 'emotional-intelligence':
-        promptContent = `Create ${questionCount} emotional intelligence assessment questions that measure the user's ability to recognize and manage their own emotions and understand others' emotions.`;
+        promptContent = `Create ${questionCount} emotional intelligence assessment questions that measure the user's ability to recognize and manage their own emotions and understand others' emotions. Include a mix of questions covering self-awareness, self-regulation, motivation, empathy, and social skills.`;
         break;
       case 'coping':
         promptContent = `Create ${questionCount} questions that help identify a user's current coping mechanisms and strategies when dealing with stress or difficult situations.`;
@@ -286,6 +428,83 @@ export const scoreAssessment = async (
   answers: Record<string, number>,
   quizType: string = "mood"
 ): Promise<{score: number; feedback: string; recommendations: string[]}> => {
+  // Calculate raw score total
+  const totalScore = Object.values(answers).reduce((sum, val) => sum + val, 0);
+  
+  // Calculate max possible score based on answer count and quiz type
+  let maxPossibleScore: number;
+  
+  switch (quizType) {
+    case 'anxiety':
+      maxPossibleScore = 21; // 7 questions, 0-3 scale
+      break;
+    case 'depression':
+      maxPossibleScore = 27; // 9 questions, 0-3 scale
+      break;
+    case 'stress':
+      maxPossibleScore = 40; // 10 questions, 0-4 scale
+      break;
+    case 'sleep':
+      maxPossibleScore = 24; // 8 questions, 0-3 scale
+      break;
+    case 'values':
+    case 'emotional-intelligence':
+      // These are measured differently - higher is better
+      maxPossibleScore = Object.keys(answers).length * 5;
+      break;
+    case 'coping':
+    case 'workplace':
+      maxPossibleScore = Object.keys(answers).length * 4;
+      break;
+    default:
+      // Default calculation based on answer count
+      maxPossibleScore = Object.keys(answers).length * 3;
+  }
+  
+  // Normalize score to 0-100% for the progress bar
+  const normalizedScore = Math.round((totalScore / maxPossibleScore) * 100);
+
+  // For standard assessments, check if we can return more specific guidance
+  if (quizType === 'anxiety' || quizType === 'depression') {
+    let severityLevel: string;
+    let recommendations: string[] = [];
+    
+    if (quizType === 'anxiety') {
+      if (totalScore <= 4) severityLevel = 'minimal';
+      else if (totalScore <= 9) severityLevel = 'mild';
+      else if (totalScore <= 14) severityLevel = 'moderate';
+      else severityLevel = 'severe';
+      
+      recommendations = STANDARD_RECOMMENDATIONS.anxiety[severityLevel];
+    }
+    
+    if (quizType === 'depression') {
+      if (totalScore <= 4) severityLevel = 'minimal';
+      else if (totalScore <= 9) severityLevel = 'mild';
+      else if (totalScore <= 14) severityLevel = 'moderate';
+      else if (totalScore <= 19) severityLevel = 'moderately severe';
+      else severityLevel = 'severe';
+      
+      recommendations = STANDARD_RECOMMENDATIONS.depression[severityLevel];
+      
+      // Add crisis resource for high scores on suicidal ideation
+      const suicidalIdeationQuestion = "Over the last two weeks, how often have you had thoughts that you would be better off dead or of hurting yourself in some way?";
+      if (answers[suicidalIdeationQuestion] && answers[suicidalIdeationQuestion] >= 2) {
+        recommendations.unshift("Contact a crisis helpline immediately: Call or text 988 to reach the Suicide & Crisis Lifeline");
+      }
+    }
+    
+    const interpretationText = ASSESSMENT_INTERPRETATION[quizType] || "";
+    const feedback = `Your score is ${totalScore}, which indicates ${severityLevel} level symptoms.\n\n${interpretationText}`;
+    
+    return {
+      score: normalizedScore,
+      feedback,
+      recommendations
+    };
+  }
+  
+  // For other assessment types, use AI to generate feedback
   try {
     const answersString = Object.entries(answers)
       .map(([question, score]) => `Question: ${question}, Score: ${score}`)
@@ -296,12 +515,6 @@ export const scoreAssessment = async (
     switch (quizType) {
       case 'mood':
         contextPrompt = "mood assessment focusing on emotional state patterns";
-        break;
-      case 'anxiety':
-        contextPrompt = "anxiety screening similar to GAD-7";
-        break;
-      case 'depression':
-        contextPrompt = "depression screening similar to PHQ-9";
         break;
       case 'stress':
         contextPrompt = "stress level assessment";
@@ -337,7 +550,7 @@ export const scoreAssessment = async (
         contextPrompt = "mental health self-assessment";
     }
       
-    const prompt = `I've taken a ${contextPrompt}. Here are my answers (0-4 scale, higher means more frequent/severe):
+    const prompt = `I've taken a ${contextPrompt}. Here are my answers (scores vary by assessment type):
 ${answersString}
 
 Based on these answers, please provide:
@@ -355,11 +568,6 @@ Based on these answers, please provide:
     
     const response = await generateChatResponse(messages);
     
-    // Parse the response to extract the score and feedback
-    const totalScore = Object.values(answers).reduce((sum, val) => sum + val, 0);
-    const maxPossibleScore = Object.keys(answers).length * 4;
-    const normalizedScore = Math.round((totalScore / maxPossibleScore) * 100);
-    
     // Extract recommendations from the response
     const recommendations = response
       .split(/\d+\.\s/)
@@ -375,7 +583,7 @@ Based on these answers, please provide:
   } catch (error) {
     console.error("Failed to score assessment:", error);
     return {
-      score: 0,
+      score: normalizedScore,
       feedback: "I'm sorry, but I couldn't process your assessment right now. Please try again later.",
       recommendations: ["Take a break and practice self-care", "Try again later when the system is available"],
     };
