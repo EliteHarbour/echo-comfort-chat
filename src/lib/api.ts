@@ -1,4 +1,5 @@
 
+
 const OPENROUTER_API_KEY = "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";
 const API_URL = "https://openrouter.ai/api/v1/chat/completions";
 export type Message = {
@@ -22,6 +23,64 @@ export type QuizQuestion = {
   id: string;
   text: string;
 };
+
+export type QuizType = {
+  id: string;
+  name: string;
+  description: string;
+  category: 'screening' | 'self-discovery' | 'situation' | 'resource-matching' | 'progress';
+};
+
+export const QUIZ_TYPES: QuizType[] = [
+  {
+    id: 'mood',
+    name: 'Mood Assessment',
+    description: 'Evaluate your current emotional state and get personalized resources',
+    category: 'screening'
+  },
+  {
+    id: 'anxiety',
+    name: 'Anxiety Screening',
+    description: 'Based on GAD-7 to measure anxiety levels',
+    category: 'screening'
+  },
+  {
+    id: 'depression',
+    name: 'Depression Screening',
+    description: 'Similar to PHQ-9 to identify potential depression symptoms',
+    category: 'screening'
+  },
+  {
+    id: 'stress',
+    name: 'Stress Level Assessment',
+    description: 'Measures your stress levels and recommends coping strategies',
+    category: 'screening'
+  },
+  {
+    id: 'sleep',
+    name: 'Sleep Quality Quiz',
+    description: 'Evaluates sleep patterns and suggests improvement techniques',
+    category: 'screening'
+  },
+  {
+    id: 'values',
+    name: 'Personal Values Clarification',
+    description: 'Identify your core values to guide decision-making',
+    category: 'self-discovery'
+  },
+  {
+    id: 'emotional-intelligence',
+    name: 'Emotional Intelligence Assessment',
+    description: 'Measure your ability to recognize and manage emotions',
+    category: 'self-discovery'
+  },
+  {
+    id: 'coping',
+    name: 'Coping Mechanism Identifier',
+    description: 'Understand your current coping strategies',
+    category: 'self-discovery'
+  }
+];
 
 export const generateChatResponse = async (
   messages: Message[]
@@ -93,13 +152,45 @@ export const generateResource = async (
 
 // Generate quiz questions using AI
 export const generateQuizQuestions = async (
-  topic: string = "mental health",
+  quizType: string = "mood",
   questionCount: number = 7
 ): Promise<QuizQuestion[]> => {
   try {
-    const prompt = `Create ${questionCount} mental health self-assessment questions about ${topic}. 
-    Format each question with an id and text property, with questions focused on symptoms and experiences 
-    over the past 2 weeks. Return as valid JSON array that I can parse directly.`;
+    // Define prompts based on quiz type
+    let promptContent;
+    
+    switch (quizType) {
+      case 'mood':
+        promptContent = `Create ${questionCount} mood assessment questions focusing on current emotional state. Questions should help identify the user's mood patterns over the past 2 weeks.`;
+        break;
+      case 'anxiety':
+        promptContent = `Create ${questionCount} anxiety screening questions based on validated tools like GAD-7. Focus on worry, nervousness, and anxiety symptoms over the past 2 weeks.`;
+        break;
+      case 'depression':
+        promptContent = `Create ${questionCount} depression screening questions similar to PHQ-9. Focus on mood, interest in activities, sleep, energy, and feelings of worthlessness over the past 2 weeks.`;
+        break;
+      case 'stress':
+        promptContent = `Create ${questionCount} stress assessment questions that measure perceived stress levels and identify stressors in the user's life over the past 2 weeks.`;
+        break;
+      case 'sleep':
+        promptContent = `Create ${questionCount} sleep quality assessment questions that evaluate sleep patterns, difficulties falling asleep, staying asleep, and daytime functioning over the past 2 weeks.`;
+        break;
+      case 'values':
+        promptContent = `Create ${questionCount} values clarification questions that help users identify their core personal values and what matters most to them.`;
+        break;
+      case 'emotional-intelligence':
+        promptContent = `Create ${questionCount} emotional intelligence assessment questions that measure the user's ability to recognize and manage their own emotions and understand others' emotions.`;
+        break;
+      case 'coping':
+        promptContent = `Create ${questionCount} questions that help identify a user's current coping mechanisms and strategies when dealing with stress or difficult situations.`;
+        break;
+      default:
+        promptContent = `Create ${questionCount} mental health self-assessment questions focusing on general wellbeing, mood, and stress over the past 2 weeks.`;
+    }
+    
+    const prompt = `${promptContent}
+    Format each question with an id and text property. 
+    Return as valid JSON array that I can parse directly.`;
 
     const messages: Message[] = [
       {
@@ -143,25 +234,57 @@ export const generateQuizQuestions = async (
 
 // Score assessment quiz
 export const scoreAssessment = async (
-  answers: Record<string, number>
+  answers: Record<string, number>,
+  quizType: string = "mood"
 ): Promise<{score: number; feedback: string; recommendations: string[]}> => {
   try {
     const answersString = Object.entries(answers)
       .map(([question, score]) => `Question: ${question}, Score: ${score}`)
       .join("\n");
+    
+    // Adjust prompt based on quiz type  
+    let contextPrompt;
+    switch (quizType) {
+      case 'mood':
+        contextPrompt = "mood assessment focusing on emotional state patterns";
+        break;
+      case 'anxiety':
+        contextPrompt = "anxiety screening similar to GAD-7";
+        break;
+      case 'depression':
+        contextPrompt = "depression screening similar to PHQ-9";
+        break;
+      case 'stress':
+        contextPrompt = "stress level assessment";
+        break;
+      case 'sleep':
+        contextPrompt = "sleep quality assessment";
+        break;
+      case 'values':
+        contextPrompt = "personal values clarification";
+        break;
+      case 'emotional-intelligence':
+        contextPrompt = "emotional intelligence assessment";
+        break;
+      case 'coping':
+        contextPrompt = "assessment of coping mechanisms";
+        break;
+      default:
+        contextPrompt = "mental health self-assessment";
+    }
       
-    const prompt = `I've taken a mental health self-assessment. Here are my answers (0-4 scale, higher means more frequent/severe):
+    const prompt = `I've taken a ${contextPrompt}. Here are my answers (0-4 scale, higher means more frequent/severe):
 ${answersString}
 
 Based on these answers, please provide:
-1. A supportive assessment of my current mental state
-2. 3-5 specific recommendations for resources or coping strategies
+1. A supportive assessment of my current state related to this specific quiz type
+2. 3-5 specific recommendations for resources or coping strategies tailored to my results
 `;
 
     const messages: Message[] = [
       {
         role: "system",
-        content: "You are a compassionate mental health professional analyzing self-assessment results. Provide supportive, non-diagnostic feedback and practical recommendations.",
+        content: "You are a compassionate mental health professional analyzing self-assessment results. Provide supportive, non-diagnostic feedback and practical recommendations specific to the assessment type.",
       },
       { role: "user", content: prompt },
     ];
@@ -194,3 +317,4 @@ Based on these answers, please provide:
     };
   }
 };
+

@@ -2,18 +2,35 @@
 import Layout from "@/components/Layout";
 import SelfAssessmentQuiz from "@/components/SelfAssessmentQuiz";
 import { useState, useEffect } from "react";
-import { generateQuizQuestions, QuizQuestion } from "@/lib/api";
+import { generateQuizQuestions, QuizQuestion, QUIZ_TYPES, QuizType } from "@/lib/api";
 import { Loader2, ClipboardList, Info } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 
 const Assessment = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [aiQuestions, setAiQuestions] = useState<QuizQuestion[]>([]);
+  const [selectedQuizType, setSelectedQuizType] = useState<string>("mood");
+  const [quizCategories, setQuizCategories] = useState<Record<string, QuizType[]>>({});
 
+  // Group quiz types by category
+  useEffect(() => {
+    const grouped = QUIZ_TYPES.reduce<Record<string, QuizType[]>>((acc, quiz) => {
+      if (!acc[quiz.category]) {
+        acc[quiz.category] = [];
+      }
+      acc[quiz.category].push(quiz);
+      return acc;
+    }, {});
+    setQuizCategories(grouped);
+  }, []);
+
+  // Load questions based on selected quiz type
   useEffect(() => {
     const loadQuestions = async () => {
       setIsLoading(true);
       try {
-        const questions = await generateQuizQuestions();
+        const questions = await generateQuizQuestions(selectedQuizType);
         setAiQuestions(questions);
       } catch (error) {
         console.error("Error generating questions:", error);
@@ -23,7 +40,14 @@ const Assessment = () => {
     };
 
     loadQuestions();
-  }, []);
+  }, [selectedQuizType]);
+
+  const handleQuizTypeSelect = (quizType: string) => {
+    setSelectedQuizType(quizType);
+  };
+
+  // Get current quiz type object
+  const currentQuiz = QUIZ_TYPES.find(q => q.id === selectedQuizType) || QUIZ_TYPES[0];
 
   return (
     <Layout>
@@ -34,8 +58,7 @@ const Assessment = () => {
             Mental Health Self-Assessment
           </h1>
           <p className="text-muted-foreground max-w-2xl">
-            Complete this brief assessment to gain insights about your current mental wellbeing. 
-            Your responses will help generate personalized recommendations.
+            Choose from different assessment types to gain personalized insights about your mental wellbeing.
           </p>
         </div>
 
@@ -47,15 +70,53 @@ const Assessment = () => {
             <div>
               <h2 className="text-lg font-semibold mb-2 text-primary">About This Assessment</h2>
               <p className="text-muted-foreground">
-                This AI-powered assessment is designed to help you reflect on your mental health.
+                These AI-powered assessments help you reflect on different aspects of your mental health.
                 Your responses are analyzed to provide tailored recommendations and insights.
               </p>
               <div className="mt-3 text-sm text-muted-foreground">
-                <p>The assessment is anonymous and your data is never stored permanently. 
-                This is not a clinical evaluation and does not provide medical diagnosis.</p>
+                <p>All assessments are anonymous and your data is never stored permanently. 
+                These are not clinical evaluations and do not provide medical diagnosis.</p>
               </div>
             </div>
           </div>
+        </div>
+
+        <h2 className="text-2xl font-semibold mb-4">Select Assessment Type</h2>
+        
+        <Tabs defaultValue="screening" className="mb-8">
+          <TabsList className="mb-4">
+            {Object.keys(quizCategories).map((category) => (
+              <TabsTrigger key={category} value={category} className="capitalize">
+                {category.replace('-', ' ')}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          
+          {Object.entries(quizCategories).map(([category, quizzes]) => (
+            <TabsContent key={category} value={category} className="mt-0">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {quizzes.map((quiz) => (
+                  <Card 
+                    key={quiz.id} 
+                    className={`cursor-pointer hover:border-primary transition-colors ${
+                      selectedQuizType === quiz.id ? 'border-primary bg-primary/5' : ''
+                    }`}
+                    onClick={() => handleQuizTypeSelect(quiz.id)}
+                  >
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-lg">{quiz.name}</CardTitle>
+                      <CardDescription>{quiz.description}</CardDescription>
+                    </CardHeader>
+                  </Card>
+                ))}
+              </div>
+            </TabsContent>
+          ))}
+        </Tabs>
+
+        <div className="mb-6">
+          <h2 className="text-2xl font-semibold mb-2">{currentQuiz.name}</h2>
+          <p className="text-muted-foreground">{currentQuiz.description}</p>
         </div>
 
         {isLoading ? (
@@ -66,7 +127,7 @@ const Assessment = () => {
           </div>
         ) : (
           <div className="bg-background border rounded-lg shadow-sm">
-            <SelfAssessmentQuiz questions={aiQuestions} />
+            <SelfAssessmentQuiz questions={aiQuestions} quizType={selectedQuizType} />
           </div>
         )}
       </div>

@@ -13,7 +13,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Loader2, ArrowRight, CheckCircle, RefreshCcw } from "lucide-react";
-import { scoreAssessment, QuizQuestion } from "@/lib/api";
+import { scoreAssessment, QuizQuestion, QUIZ_TYPES } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 
 // Default questions as fallback
@@ -63,9 +63,10 @@ type AssessmentResults = {
 
 interface SelfAssessmentQuizProps {
   questions?: QuizQuestion[];
+  quizType?: string;
 }
 
-const SelfAssessmentQuiz = ({ questions = defaultQuestions }: SelfAssessmentQuizProps) => {
+const SelfAssessmentQuiz = ({ questions = defaultQuestions, quizType = "mood" }: SelfAssessmentQuizProps) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [currentAnswer, setCurrentAnswer] = useState<string | null>(null);
@@ -76,6 +77,9 @@ const SelfAssessmentQuiz = ({ questions = defaultQuestions }: SelfAssessmentQuiz
   const currentQuestion = questions[currentQuestionIndex];
   const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
   const isLastQuestion = currentQuestionIndex === questions.length - 1;
+
+  // Get current quiz details
+  const currentQuiz = QUIZ_TYPES.find(q => q.id === quizType) || QUIZ_TYPES[0];
 
   const handleAnswerSelect = (value: string) => {
     setCurrentAnswer(value);
@@ -103,7 +107,7 @@ const SelfAssessmentQuiz = ({ questions = defaultQuestions }: SelfAssessmentQuiz
     setIsSubmitting(true);
 
     try {
-      const assessmentResults = await scoreAssessment(finalAnswers);
+      const assessmentResults = await scoreAssessment(finalAnswers, quizType);
       setResults(assessmentResults);
     } catch (error) {
       toast({
@@ -130,10 +134,10 @@ const SelfAssessmentQuiz = ({ questions = defaultQuestions }: SelfAssessmentQuiz
         <CardHeader className="text-center">
           <CardTitle className="text-2xl flex items-center justify-center gap-2">
             <CheckCircle className="h-5 w-5 text-primary" />
-            Assessment Complete
+            {currentQuiz.name} Results
           </CardTitle>
           <CardDescription>
-            Thank you for completing the self-assessment. Here are your results:
+            Thank you for completing the {currentQuiz.name.toLowerCase()}. Here are your results:
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -166,14 +170,20 @@ const SelfAssessmentQuiz = ({ questions = defaultQuestions }: SelfAssessmentQuiz
             </ul>
           </div>
         </CardContent>
-        <CardFooter>
+        <CardFooter className="flex flex-col gap-3">
           <Button
             className="w-full"
-            variant="outline"
             onClick={restartQuiz}
           >
             <RefreshCcw className="h-4 w-4 mr-2" />
-            Take Assessment Again
+            Retake This Assessment
+          </Button>
+          <Button
+            className="w-full"
+            variant="outline"
+            onClick={() => window.location.reload()}
+          >
+            Choose Different Assessment
           </Button>
         </CardFooter>
       </Card>
@@ -183,10 +193,9 @@ const SelfAssessmentQuiz = ({ questions = defaultQuestions }: SelfAssessmentQuiz
   return (
     <Card className="w-full max-w-3xl mx-auto">
       <CardHeader>
-        <CardTitle>Mental Health Self-Assessment</CardTitle>
+        <CardTitle>{currentQuiz.name}</CardTitle>
         <CardDescription>
-          This brief assessment helps identify potential mental health concerns.
-          Your responses are anonymous and not stored beyond this session.
+          {currentQuiz.description}. Your responses are anonymous and not stored beyond this session.
         </CardDescription>
         <Progress value={progress} className="mt-2" />
       </CardHeader>
