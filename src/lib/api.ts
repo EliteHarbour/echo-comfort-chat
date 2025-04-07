@@ -1,5 +1,4 @@
 
-
 const OPENROUTER_API_KEY = "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";
 const API_URL = "https://openrouter.ai/api/v1/chat/completions";
 export type Message = {
@@ -32,6 +31,7 @@ export type QuizType = {
 };
 
 export const QUIZ_TYPES: QuizType[] = [
+  // Screening quizzes
   {
     id: 'mood',
     name: 'Mood Assessment',
@@ -62,6 +62,8 @@ export const QUIZ_TYPES: QuizType[] = [
     description: 'Evaluates sleep patterns and suggests improvement techniques',
     category: 'screening'
   },
+  
+  // Self-discovery quizzes
   {
     id: 'values',
     name: 'Personal Values Clarification',
@@ -79,6 +81,38 @@ export const QUIZ_TYPES: QuizType[] = [
     name: 'Coping Mechanism Identifier',
     description: 'Understand your current coping strategies',
     category: 'self-discovery'
+  },
+  {
+    id: 'personal-strengths',
+    name: 'Personal Strengths Finder',
+    description: 'Identify strengths you can leverage during difficult situations',
+    category: 'self-discovery'
+  },
+  
+  // Situation-specific assessments
+  {
+    id: 'workplace',
+    name: 'Workplace Stress Evaluation',
+    description: 'Targeted assessment for professional challenges',
+    category: 'situation'
+  },
+  {
+    id: 'relationships',
+    name: 'Relationship Health Check',
+    description: 'Evaluate interpersonal relationship dynamics',
+    category: 'situation'
+  },
+  {
+    id: 'academic',
+    name: 'Academic Pressure Assessment',
+    description: 'For students dealing with educational stress',
+    category: 'situation'
+  },
+  {
+    id: 'life-balance',
+    name: 'Life Balance Quiz',
+    description: 'Identify areas of life needing more attention or resources',
+    category: 'situation'
   }
 ];
 
@@ -184,6 +218,21 @@ export const generateQuizQuestions = async (
       case 'coping':
         promptContent = `Create ${questionCount} questions that help identify a user's current coping mechanisms and strategies when dealing with stress or difficult situations.`;
         break;
+      case 'personal-strengths':
+        promptContent = `Create ${questionCount} personal strengths assessment questions that help identify the user's character strengths, talents, and abilities they can leverage during difficult situations. Include questions about past successes, natural abilities, and resilience factors.`;
+        break;
+      case 'workplace':
+        promptContent = `Create ${questionCount} workplace stress evaluation questions that assess professional challenges, work-life balance, career satisfaction, and sources of occupational stress. Questions should help identify specific workplace stressors and their impact.`;
+        break;
+      case 'relationships':
+        promptContent = `Create ${questionCount} relationship health assessment questions that evaluate interpersonal dynamics, communication patterns, boundaries, and emotional connection in close relationships. Questions should help identify relationship strengths and areas for improvement.`;
+        break;
+      case 'academic':
+        promptContent = `Create ${questionCount} academic pressure assessment questions designed for students dealing with educational stress. Focus on workload management, performance anxiety, learning challenges, and academic-life balance. Questions should help identify specific educational stressors.`;
+        break;
+      case 'life-balance':
+        promptContent = `Create ${questionCount} life balance assessment questions that help identify areas of life needing more attention or resources. Cover work, relationships, self-care, leisure, personal growth, and purpose. Questions should reveal imbalances and neglected life domains.`;
+        break;
       default:
         promptContent = `Create ${questionCount} mental health self-assessment questions focusing on general wellbeing, mood, and stress over the past 2 weeks.`;
     }
@@ -269,6 +318,21 @@ export const scoreAssessment = async (
       case 'coping':
         contextPrompt = "assessment of coping mechanisms";
         break;
+      case 'personal-strengths':
+        contextPrompt = "personal strengths finder assessment";
+        break;
+      case 'workplace':
+        contextPrompt = "workplace stress evaluation";
+        break;
+      case 'relationships':
+        contextPrompt = "relationship health check";
+        break;
+      case 'academic':
+        contextPrompt = "academic pressure assessment for students";
+        break;
+      case 'life-balance':
+        contextPrompt = "life balance assessment";
+        break;
       default:
         contextPrompt = "mental health self-assessment";
     }
@@ -317,4 +381,3 @@ Based on these answers, please provide:
     };
   }
 };
-
