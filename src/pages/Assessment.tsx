@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
-import { getQuizQuestions } from "@/lib/quizData"; // We'll create this file to store all quiz questions
+import { getQuizQuestions } from "@/lib/quizData"; 
 
 const Assessment = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -131,7 +131,10 @@ const Assessment = () => {
           <h2 className="text-2xl font-semibold mb-2">{currentQuiz.name}</h2>
           <p className="text-muted-foreground">{currentQuiz.description}</p>
           
-          {(selectedQuizType === 'emotional-intelligence' || selectedQuizType === 'values') && (
+          {(selectedQuizType === 'emotional-intelligence' || selectedQuizType === 'values' || 
+            selectedQuizType === 'cognitive' || selectedQuizType === 'social-engagement' ||
+            selectedQuizType === 'emotional-landscape' || selectedQuizType === 'motivational' ||
+            selectedQuizType === 'adaptability') && (
             <Alert className="mt-4">
               <AlertTriangle className="h-4 w-4" />
               <AlertTitle>This is a condensed version</AlertTitle>
