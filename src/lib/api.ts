@@ -271,11 +271,11 @@ export const generateChatResponse = async (
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-        "HTTP-Referer": window.location.origin || "https://lovable.ai", // Required for OpenRouter API
-        "X-Title": "Mental Health Support AI" // Optional but recommended
+        "HTTP-Referer": window.location.origin,
+        "X-Title": "Mental Health Support AI"
       },
       body: JSON.stringify({
-        model: "meta-llama/llama-3-70b-instruct", // Using Llama 3.1 model on OpenRouter
+        model: "meta-llama/llama-3-70b-instruct",
         messages: messages,
         max_tokens: 500,
         temperature: 0.7,
@@ -292,7 +292,7 @@ export const generateChatResponse = async (
     return data.choices[0].message.content;
   } catch (error) {
     console.error("Failed to generate chat response:", error);
-    return "I'm sorry, but I'm having trouble connecting right now. Please try again in a moment.";
+    throw error;
   }
 };
 

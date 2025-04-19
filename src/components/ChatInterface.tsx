@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { generateChatResponse, Message } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Progress } from "@/components/ui/progress";
 
 const INITIAL_MESSAGE: Message = {
   role: "system",
@@ -95,24 +95,8 @@ const ChatInterface = () => {
         userMessage
       ];
       
-      // Attempt to get a response with retries
-      let attempts = 0;
-      const maxAttempts = 2;
-      let response = "";
-      
-      while (attempts < maxAttempts) {
-        try {
-          response = await generateChatResponse(conversationHistory);
-          break; // If successful, exit the retry loop
-        } catch (error) {
-          attempts++;
-          if (attempts >= maxAttempts) {
-            throw error; // Rethrow if we've exhausted our retries
-          }
-          // Wait before retrying
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-      }
+      // Get response from API
+      const response = await generateChatResponse(conversationHistory);
       
       const assistantMessage: Message = {
         role: "assistant",
@@ -120,9 +104,11 @@ const ChatInterface = () => {
       };
       
       setMessages((prev) => [...prev, assistantMessage]);
-      // Force scroll to bottom again after response is received
+      // Force scroll to bottom after response is received
       scrollToBottom();
     } catch (error) {
+      console.error("Chat error:", error);
+      
       // Add a visible error message to the chat
       setConnectionError(true);
       setMessages((prev) => [...prev, ERROR_MESSAGE]);
@@ -132,7 +118,6 @@ const ChatInterface = () => {
         description: "Having trouble reaching the AI service. Please try again later.",
         variant: "destructive",
       });
-      console.error("Chat error:", error);
     } finally {
       setIsLoading(false);
     }
