@@ -1,4 +1,3 @@
-
 const OPENROUTER_API_KEY = "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";
 const API_URL = "https://openrouter.ai/api/v1/chat/completions";
 
@@ -275,11 +274,11 @@ export const generateChatResponse = async (
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-        "HTTP-Referer": window.location.href, // Required for OpenRouter API
+        "HTTP-Referer": window.location.origin || "https://lovable.ai", // Required for OpenRouter API
         "X-Title": "Mental Health Support AI" // Optional but recommended
       },
       body: JSON.stringify({
-        model: "gpt-3.5-turbo", // Using a free model on OpenRouter
+        model: "anthropic/claude-instant-v1", // Using a reliable free model on OpenRouter
         messages: messages,
         max_tokens: 500,
         temperature: 0.7,

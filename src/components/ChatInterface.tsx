@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Send, User, Bot } from "lucide-react";
+import { Loader2, Send, User, Bot, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { generateChatResponse, Message } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const INITIAL_MESSAGE: Message = {
   role: "system",
@@ -19,10 +20,16 @@ const WELCOME_MESSAGE: Message = {
   content: "Hi there! I'm your EchoComfort AI assistant. I'm here to listen and provide support for whatever you're going through. What's on your mind today?"
 };
 
+const ERROR_MESSAGE: Message = {
+  role: "assistant",
+  content: "I'm having trouble connecting to my knowledge base right now. This could be due to high demand or a temporary service disruption. Please try again in a moment, or you can continue typing and I'll respond when the connection is restored."
+};
+
 const ChatInterface = () => {
   const [messages, setMessages] = useState<Message[]>([WELCOME_MESSAGE]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [connectionError, setConnectionError] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -78,6 +85,7 @@ const ChatInterface = () => {
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
+    setConnectionError(false);
 
     try {
       // Prepare conversation history for the API
@@ -87,7 +95,24 @@ const ChatInterface = () => {
         userMessage
       ];
       
-      const response = await generateChatResponse(conversationHistory);
+      // Attempt to get a response with retries
+      let attempts = 0;
+      const maxAttempts = 2;
+      let response = "";
+      
+      while (attempts < maxAttempts) {
+        try {
+          response = await generateChatResponse(conversationHistory);
+          break; // If successful, exit the retry loop
+        } catch (error) {
+          attempts++;
+          if (attempts >= maxAttempts) {
+            throw error; // Rethrow if we've exhausted our retries
+          }
+          // Wait before retrying
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
       
       const assistantMessage: Message = {
         role: "assistant",
@@ -98,9 +123,13 @@ const ChatInterface = () => {
       // Force scroll to bottom again after response is received
       scrollToBottom();
     } catch (error) {
+      // Add a visible error message to the chat
+      setConnectionError(true);
+      setMessages((prev) => [...prev, ERROR_MESSAGE]);
+      
       toast({
-        title: "Error",
-        description: "Failed to get a response. Please try again.",
+        title: "Connection Error",
+        description: "Having trouble reaching the AI service. Please try again later.",
         variant: "destructive",
       });
       console.error("Chat error:", error);
@@ -118,6 +147,7 @@ const ChatInterface = () => {
 
   const clearChat = () => {
     setMessages([WELCOME_MESSAGE]);
+    setConnectionError(false);
     localStorage.removeItem("chatMessages");
     toast({
       description: "Chat history cleared",
@@ -135,6 +165,15 @@ const ChatInterface = () => {
           Clear Chat
         </Button>
       </div>
+      
+      {connectionError && (
+        <Alert variant="destructive" className="mx-4 mt-2">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Connection issues detected. Your messages are saved and will be answered when the connection is restored.
+          </AlertDescription>
+        </Alert>
+      )}
       
       <ScrollArea 
         className="flex-1 p-4" 
