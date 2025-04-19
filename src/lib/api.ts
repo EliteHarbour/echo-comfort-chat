@@ -1,4 +1,5 @@
-const OPENROUTER_API_KEY = "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";
+
+const OPENROUTER_API_KEY = "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";
 const API_URL = "https://openrouter.ai/api/v1/chat/completions";
 
 export type Message = {
@@ -273,10 +274,12 @@ export const generateChatResponse = async (
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${OPENROUTER_API_KEY}`
+        "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+        "HTTP-Referer": window.location.href, // Required for OpenRouter API
+        "X-Title": "Mental Health Support AI" // Optional but recommended
       },
       body: JSON.stringify({
-        model: "openai/gpt-3.5-turbo", // Using a model available in the free tier
+        model: "gpt-3.5-turbo", // Using a free model on OpenRouter
         messages: messages,
         max_tokens: 500,
         temperature: 0.7,
