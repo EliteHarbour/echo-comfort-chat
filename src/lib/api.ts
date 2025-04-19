@@ -275,7 +275,7 @@ export const generateChatResponse = async (
         "X-Title": "Mental Health Support AI"
       },
       body: JSON.stringify({
-        model: "meta-llama/llama-3-70b-instruct",
+        model: "meta/llama-3.1-8b-instruct",
         messages: messages,
         max_tokens: 500,
         temperature: 0.7,

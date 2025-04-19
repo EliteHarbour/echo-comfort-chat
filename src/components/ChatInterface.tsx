@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -95,8 +96,24 @@ const ChatInterface = () => {
         userMessage
       ];
       
-      // Get response from API
-      const response = await generateChatResponse(conversationHistory);
+      // Attempt to get a response with retries
+      let attempts = 0;
+      const maxAttempts = 2;
+      let response = "";
+      
+      while (attempts < maxAttempts) {
+        try {
+          response = await generateChatResponse(conversationHistory);
+          break; // If successful, exit the retry loop
+        } catch (error) {
+          attempts++;
+          if (attempts >= maxAttempts) {
+            throw error; // Rethrow if we've exhausted our retries
+          }
+          // Wait before retrying
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
       
       const assistantMessage: Message = {
         role: "assistant",
