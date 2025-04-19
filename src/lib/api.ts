@@ -1,4 +1,4 @@
-const OPENROUTER_API_KEY = "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";
+const OPENROUTER_API_KEY = "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";
 const API_URL = "https://openrouter.ai/api/v1/chat/completions";
 
 export type Message = {
@@ -116,7 +116,6 @@ export const QUIZ_TYPES: QuizType[] = [
   }
 ];
 
-// Standard assessment questions for common clinical assessments
 const STANDARD_ASSESSMENTS: Record<string, QuizQuestion[]> = {
   anxiety: [
     { id: "a1", text: "Over the last 2 weeks, how often have you been bothered by feeling nervous, anxious, or on edge?" },
@@ -162,7 +161,6 @@ const STANDARD_ASSESSMENTS: Record<string, QuizQuestion[]> = {
   ],
 };
 
-// Define scoring interpretations for standard assessments
 const ASSESSMENT_INTERPRETATION: Record<string, string> = {
   anxiety: `
 Scoring: 
@@ -196,7 +194,6 @@ Scoring:
   `,
 };
 
-// Standard recommendations based on assessment type
 const STANDARD_RECOMMENDATIONS: Record<string, Record<string, string[]>> = {
   anxiety: {
     minimal: [
@@ -278,7 +275,7 @@ export const generateChatResponse = async (
         "X-Title": "Mental Health Support AI" // Optional but recommended
       },
       body: JSON.stringify({
-        model: "anthropic/claude-instant-v1", // Using a reliable free model on OpenRouter
+        model: "meta-llama/llama-3-70b-instruct", // Using Llama 3.1 model on OpenRouter
         messages: messages,
         max_tokens: 500,
         temperature: 0.7,
@@ -299,21 +296,17 @@ export const generateChatResponse = async (
   }
 };
 
-// Generate a resource using the AI
 export const generateResource = async (
   resourceTypeOrCustomPrompt: string,
   userConcern?: string
 ): Promise<string> => {
-  // Check if this is a custom prompt or a resource type
   const isCustomPrompt = !userConcern && resourceTypeOrCustomPrompt.length > 20;
   
   let prompt;
   
   if (isCustomPrompt) {
-    // Use the input directly as a custom prompt
     prompt = resourceTypeOrCustomPrompt;
   } else {
-    // Format as a resource type prompt
     prompt = `Create a helpful resource about ${resourceTypeOrCustomPrompt}${
       userConcern ? ` for someone dealing with ${userConcern}` : ""
     }. Include an introduction, key points, practical exercises, and a conclusion. Format with markdown.`;
@@ -335,18 +328,15 @@ export const generateResource = async (
   }
 };
 
-// Generate quiz questions using AI or return standardized questions if available
 export const generateQuizQuestions = async (
   quizType: string = "mood",
   questionCount: number = 7
 ): Promise<QuizQuestion[]> => {
-  // First check if we have standard questions for this assessment type
   if (STANDARD_ASSESSMENTS[quizType]) {
     return STANDARD_ASSESSMENTS[quizType];
   }
   
   try {
-    // Define prompts based on quiz type
     let promptContent;
     
     switch (quizType) {
@@ -395,9 +385,7 @@ export const generateQuizQuestions = async (
     
     const response = await generateChatResponse(messages);
     
-    // Try to parse the response as JSON
     try {
-      // In case the response has markdown code blocks, try to extract just the JSON
       const jsonMatch = response.match(/```(?:json)?([\s\S]*?)```/) || 
                        [null, response];
       const jsonContent = jsonMatch[1].trim();
@@ -409,7 +397,6 @@ export const generateQuizQuestions = async (
       }));
     } catch (parseError) {
       console.error("Failed to parse question response:", parseError);
-      // If parsing fails, return default questions
       return Array.from({ length: questionCount }, (_, i) => ({
         id: `q${i + 1}`,
         text: `Question ${i + 1} about your mental health in the past 2 weeks.`
@@ -417,7 +404,6 @@ export const generateQuizQuestions = async (
     }
   } catch (error) {
     console.error("Failed to generate quiz questions:", error);
-    // Return default questions if API call fails
     return Array.from({ length: questionCount }, (_, i) => ({
       id: `q${i + 1}`,
       text: `Question ${i + 1} about your mental health in the past 2 weeks.`
@@ -425,33 +411,29 @@ export const generateQuizQuestions = async (
   }
 };
 
-// Score assessment quiz
 export const scoreAssessment = async (
   answers: Record<string, number>,
   quizType: string = "mood"
 ): Promise<{score: number; feedback: string; recommendations: string[]}> => {
-  // Calculate raw score total
   const totalScore = Object.values(answers).reduce((sum, val) => sum + val, 0);
   
-  // Calculate max possible score based on answer count and quiz type
   let maxPossibleScore: number;
   
   switch (quizType) {
     case 'anxiety':
-      maxPossibleScore = 21; // 7 questions, 0-3 scale
+      maxPossibleScore = 21;
       break;
     case 'depression':
-      maxPossibleScore = 27; // 9 questions, 0-3 scale
+      maxPossibleScore = 27;
       break;
     case 'stress':
-      maxPossibleScore = 40; // 10 questions, 0-4 scale
+      maxPossibleScore = 40;
       break;
     case 'sleep':
-      maxPossibleScore = 24; // 8 questions, 0-3 scale
+      maxPossibleScore = 24;
       break;
     case 'values':
     case 'emotional-intelligence':
-      // These are measured differently - higher is better
       maxPossibleScore = Object.keys(answers).length * 5;
       break;
     case 'coping':
@@ -459,14 +441,11 @@ export const scoreAssessment = async (
       maxPossibleScore = Object.keys(answers).length * 4;
       break;
     default:
-      // Default calculation based on answer count
       maxPossibleScore = Object.keys(answers).length * 3;
   }
   
-  // Normalize score to 0-100% for the progress bar
   const normalizedScore = Math.round((totalScore / maxPossibleScore) * 100);
 
-  // For standard assessments, check if we can return more specific guidance
   if (quizType === 'anxiety' || quizType === 'depression') {
     let severityLevel: string;
     let recommendations: string[] = [];
@@ -489,7 +468,6 @@ export const scoreAssessment = async (
       
       recommendations = STANDARD_RECOMMENDATIONS.depression[severityLevel];
       
-      // Add crisis resource for high scores on suicidal ideation
       const suicidalIdeationQuestion = "Over the last two weeks, how often have you had thoughts that you would be better off dead or of hurting yourself in some way?";
       if (answers[suicidalIdeationQuestion] && answers[suicidalIdeationQuestion] >= 2) {
         recommendations.unshift("Contact a crisis helpline immediately: Call or text 988 to reach the Suicide & Crisis Lifeline");
@@ -506,13 +484,11 @@ export const scoreAssessment = async (
     };
   }
   
-  // For other assessment types, use AI to generate feedback
   try {
     const answersString = Object.entries(answers)
       .map(([question, score]) => `Question: ${question}, Score: ${score}`)
       .join("\n");
     
-    // Adjust prompt based on quiz type  
     let contextPrompt;
     switch (quizType) {
       case 'mood':
@@ -570,7 +546,6 @@ Based on these answers, please provide:
     
     const response = await generateChatResponse(messages);
     
-    // Extract recommendations from the response
     const recommendations = response
       .split(/\d+\.\s/)
       .filter(item => item.trim().length > 10)
