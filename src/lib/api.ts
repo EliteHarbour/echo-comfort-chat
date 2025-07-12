@@ -1,5 +1,5 @@
-const OPENROUTER_API_KEY = "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";
-const API_URL = "https://openrouter.ai/api/v1/chat/completions";
+const LLM7_API_KEY = "unused"; // Free access as per LLM7.io documentation
+const API_URL = "https://api.llm7.io/v1/chat/completions";
 
 export type Message = {
   role: "system" | "user" | "assistant";
@@ -270,12 +270,10 @@ export const generateChatResponse = async (
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-        "HTTP-Referer": window.location.origin,
-        "X-Title": "Mental Health Support AI"
+        "Authorization": `Bearer ${LLM7_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "meta/llama-3.1-8b-instruct",
+        model: "gpt-4.1-2025-04-14",
         messages: messages,
         max_tokens: 500,
         temperature: 0.7,
