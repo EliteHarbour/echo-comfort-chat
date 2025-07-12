@@ -69,7 +69,7 @@ const Footer = () => {
           </p>
           <div className="flex items-center gap-4 mt-4 sm:mt-0">
             <span className="text-xs text-muted-foreground">
-              Made with 💙 for mental wellbeing
+              Made by Adnan Ahamed Farooqui
             </span>
           </div>
         </div>
